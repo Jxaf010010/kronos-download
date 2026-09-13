@@ -18,26 +18,21 @@ jobs:
         run: |
           pip install -q huggingface_hub
           python - <<'PY'
-          import os, shutil
-          from huggingface_hub import hf_hub_download
+          from huggingface_hub import snapshot_download
 
-          files = [
-              ("NeoQuasar/Kronos-mini", "config.json"),
-              ("NeoQuasar/Kronos-mini", "model.safetensors"),
-              ("NeoQuasar/Kronos-Tokenizer-base", "config.json"),
-              ("NeoQuasar/Kronos-Tokenizer-base", "model.safetensors"),
+          repos = [
+              "NeoQuasar/Kronos-Tokenizer-2k",
+              "NeoQuasar/Kronos-small",
+              "NeoQuasar/Kronos-base",
           ]
-          for repo, fname in files:
-              model = repo.split("/")[-1]
-              dest = os.path.join("kronos_models", model, fname)
-              os.makedirs(os.path.dirname(dest), exist_ok=True)
-              p = hf_hub_download(repo_id=repo, filename=fname)
-              shutil.copyfile(p, dest)
-              print("downloaded", repo, fname)
+          for repo in repos:
+              name = repo.split("/")[-1]
+              snapshot_download(repo_id=repo, local_dir=f"kronos_models/{name}")
+              print("downloaded", repo)
           PY
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: kronos-models
+          name: kronos-models-more
           path: kronos_models/
