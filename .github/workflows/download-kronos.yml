@@ -1,0 +1,43 @@
+name: Download Kronos Weights
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  download:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Download Kronos models from HuggingFace
+        run: |
+          pip install -q huggingface_hub
+          python - <<'PY'
+          import os, shutil
+          from huggingface_hub import hf_hub_download
+
+          files = [
+              ("NeoQuasar/Kronos-mini", "config.json"),
+              ("NeoQuasar/Kronos-mini", "model.safetensors"),
+              ("NeoQuasar/Kronos-Tokenizer-base", "config.json"),
+              ("NeoQuasar/Kronos-Tokenizer-base", "model.safetensors"),
+          ]
+          for repo, fname in files:
+              model = repo.split("/")[-1]
+              dest = os.path.join("kronos_models", model, fname)
+              os.makedirs(os.path.dirname(dest), exist_ok=True)
+              p = hf_hub_download(repo_id=repo, filename=fname)
+              shutil.copyfile(p, dest)
+              print("downloaded", repo, fname)
+          PY
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kronos-models
+          path: kronos_models/
